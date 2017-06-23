@@ -7,4 +7,5 @@ This website is companion of title [Microservices with Azure](https://www.packtp
 ## Join Us on LinkedIn
 Join Azure Service Fabric experts and enthusiasts on LinkedIn.
 
+![Local Image](./images/profilePicture.jpg) Some Text
 
