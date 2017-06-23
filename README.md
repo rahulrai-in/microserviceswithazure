@@ -2,5 +2,5 @@
 
 ---
 
-oWelcome ttheBuy you copy \[\]here\(\)http://google.com
+oWelcome ttheBuy you copy \[\]here\(\)[http://google.com](http://google.com)a
 
