@@ -17,7 +17,7 @@ Finally, we will gain insights into some of the advanced but essential concepts 
 
 **Microservices with Azure is available on Amazon. Download a .pdf, .epub, or .mobi file from:**
 
-[https://www.amazon.com/Microservices-Azure-Namit-Tanasseri-ebook/dp/B01M1NOVY8](https://www.amazon.com/Microservices-Azure-Namit-Tanasseri-ebook/dp/B01M1NOVY8)
+[https://www.amazon.com/dp/1787121143](https://www.amazon.com/dp/1787121143)
 
 ---
 
