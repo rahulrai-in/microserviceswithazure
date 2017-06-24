@@ -7,9 +7,11 @@ We will keep supplementing this section with relevant links and discussions that
 ### [Setting Security Policy in Your Application](https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-application-runas-security)
 
 Sometimes you'd want to run your applictions under a different user account than the default. When you are running Service Fabric on cloud, Service Fabric provides the capability to run applications under a local user account or local system account, which is specified within the application manifest. Supported local system account types are **LocalUser**, **NetworkService**, **LocalService**, and **LocalSystem**.
+
 ---
 
 ### [Setting Security Policy in Your Application](https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-application-runas-security)
 
 Sometimes you'd want to run your applictions under a different user account than the default. When you are running Service Fabric on cloud, Service Fabric provides the capability to run applications under a local user account or local system account, which is specified within the application manifest. Supported local system account types are **LocalUser**, **NetworkService**, **LocalService**, and **LocalSystem**.
+
 ---

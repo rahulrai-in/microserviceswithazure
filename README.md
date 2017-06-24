@@ -15,10 +15,11 @@ Finally, we will gain insights into some of the advanced but essential concepts 
 ---
 ### Available on Amazon
 
+**Microservices with Azure is available on Amazon. Download a .pdf, .epub, or .mobi file from:**
+
 [https://www.amazon.com/Microservices-Azure-Namit-Tanasseri-ebook/dp/B01M1NOVY8](https://www.amazon.com/Microservices-Azure-Namit-Tanasseri-ebook/dp/B01M1NOVY8)
 
 ---
 
-## Azure Service Fabric on LinkedIn
-![Local Image](./images/LinkedIn.png) **Join Azure Service Fabric experts and enthusiasts on [LinkedIn](https://www.linkedin.com/groups/8526708).**
-
+## ![Local Image](./images/LinkedIn.png)
+ **Join Azure Service Fabric experts and enthusiasts on [LinkedIn](https://www.linkedin.com/groups/8526708).**
