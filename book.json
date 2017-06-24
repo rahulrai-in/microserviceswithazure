@@ -1,10 +1,10 @@
 {
-  "plugins": [ "downloadpdf" ],
-  "pluginsConfig": {
-    "downloadpdf": {
-      "base": "https://www.gitbook.com/download/pdf/zhaoda/webpack-handbook",
-      "label": "Download PDF",
-      "multilingual": false
-    }
-  }
+  //"plugins": [ "downloadpdf" ],
+  //"pluginsConfig": {
+  //  "downloadpdf": {
+  //    "base": "https://www.gitbook.com/download/pdf/zhaoda/webpack-handbook",
+  //    "label": "Download PDF",
+  //    "multilingual": false
+  //  }
+  //}
 }
