@@ -19,8 +19,6 @@ Finally, we will gain insights into some of the advanced but essential concepts 
 
 ---
 
-## Join Us on LinkedIn
-Join Azure Service Fabric experts and enthusiasts on LinkedIn.
-
-![Local Image](./images/profilePicture.jpg) Some Text
+## Join Azure Service Fabric Community on LinkedIn
+![Local Image](./images/LinkedIn.png) Join Azure Service Fabric experts and enthusiasts on [LinkedIn](https://www.linkedin.com/groups/8526708).
 
