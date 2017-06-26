@@ -21,4 +21,4 @@ Finally, we will gain insights into some of the advanced but essential concepts 
 
 ---
 
-![Local Image](./images/LinkedIn.png) *Join Azure Service Fabric experts and enthusiasts on [LinkedIn](https://www.linkedin.com/groups/8526708).*
+![Local Image](./images/LinkedIn.png) <i class="fa fa-renren fa-5x"></i> *Join Azure Service Fabric experts and enthusiasts on [LinkedIn](https://www.linkedin.com/groups/8526708).*

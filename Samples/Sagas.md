@@ -17,10 +17,11 @@ One of the Microservices in the Saga drives the workflow. In our solution that s
 
 ![Sagas Pattern](./images/Sagas Pattern.png)
 
-<img src="./images/Sagas Pattern.png" align="center">
-
-
 The Sagas sample solution consists
+
+![Sagas Solution](./images/Sagas Solution.png)
+
+
 
 
 
