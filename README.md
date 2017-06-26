@@ -13,7 +13,7 @@ This book will guide you through several Microservice Architecture Patterns that
 Finally, we will gain insights into some of the advanced but essential concepts of Microservices such as DevOps, security and, the next wave of Microservices which is popularly known as Nanoservices. This book will help you undertake your next Microservices venture with confidence.
 
 ---
-### Available on Amazon
+## <i class="fa fa-amazon" aria-hidden="true" style="font-size:50px"></i> Available on Amazon
 
 **Microservices with Azure is available on Amazon. Download a .pdf, .epub, or .mobi file from:**
 
@@ -21,4 +21,5 @@ Finally, we will gain insights into some of the advanced but essential concepts 
 
 ---
 
-<i class="fa fa-linkedin-square" style="font-size:50px"></i> *Connect with Azure Service Fabric experts and enthusiasts on **[LinkedIn](https://www.linkedin.com/groups/8526708)**.*
+### <i class="fa fa-linkedin-square" style="font-size:50px"></i> Connect
+Connect with Azure Service Fabric experts and enthusiasts on **[LinkedIn](https://www.linkedin.com/groups/8526708)**.
