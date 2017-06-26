@@ -15,11 +15,11 @@ The approval of leave requires the approval of first the Line Manager and then t
 ## Solution
 One of the Microservices in the Saga drives the workflow. In our solution that servie is the **Leave Saga Service**. There are two other participant Microserviecs in the solution, namely the **Line Manager Leave Approval Service** and the **HR Leave Approval Service**, which provide approvals to a leave request. The following diagram illustrates three Microservices working in concert.
 
-![Sagas Pattern](./images/Sagas Pattern.png)
+![Sagas Pattern](/images/Sagas Pattern.png)
 
 The Sagas sample solution consists
 
-![Sagas Solution](./images/Sagas Solution.png)
+![Sagas Solution](/images/Sagas Solution.png)
 
 
 
