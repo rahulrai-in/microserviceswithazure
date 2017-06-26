@@ -21,5 +21,5 @@ Finally, we will gain insights into some of the advanced but essential concepts 
 
 ---
 
-### <i class="fa fa-linkedin-square" style="font-size:30px"></i> Connect
+### <i class="fa fa-linkedin-square" style="font-size:35px"></i> Connect
 Connect with Azure Service Fabric experts and enthusiasts on **[LinkedIn](https://www.linkedin.com/groups/8526708)**.
