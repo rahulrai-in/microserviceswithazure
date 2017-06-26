@@ -21,4 +21,4 @@ Finally, we will gain insights into some of the advanced but essential concepts 
 
 ---
 
-<i class="fa fa-linkedin fa-3"></i> *Join Azure Service Fabric experts and enthusiasts on **[LinkedIn](https://www.linkedin.com/groups/8526708)**.*
+<i class="fa fa-linkedin-square" style="font-size:50px"></i> *Connect with Azure Service Fabric experts and enthusiasts on **[LinkedIn](https://www.linkedin.com/groups/8526708)**.*
