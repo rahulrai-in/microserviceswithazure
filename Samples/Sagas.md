@@ -19,21 +19,21 @@ One of the Microservices in the Saga drives the workflow. In our solution that s
 
 The **Leave Saga Service** drives the workflow and communicates first with **Line Manager Leave Approval Service** to get the leave approved. Once the service responds with an approval message, the service then communicates with the **HR Leave Approval Service** to obtain an approval. Only when both the services provide an affirmative response to the leave requst, the employee leave request stands approved.
 
-The sample solution consists of three Microservices combined together in a Service Fabric application for ease of deployment. 
+## Implementation Overview
+The sample solution consists of three Microservices combined together in a Service Fabric application for ease of deployment. The following diagram indiacates the three Microservices in the solution each of which correspond to the Microservices shown in the High-level architecture diagram above.
 
 ![Sagas Solution](/images/Sagas Solution.png)
 
-Each of the Microservices in the solution correspond to the Microservices shown in the High-level architecture diagram above.
-
-## Implementation Overview
-The code of the **HR Leave Approval Service** and the **Line Manager Leave Approval Service** is straightforward and self explanatory. To implement saga in the **Leave Saga Service**
+The implementation of the **HR Leave Approval Service** and the **Line Manager Leave Approval Service** is straightforward and self explanatory. To implement saga in the **Leave Saga Service**, we have used NServiceBus sagas. The initialization code in `LeaveSagaService` sets up NServicebus to work with 
 
 
+To debug the solution on your system, launch the Azure Storage emulator and wait for it to provision emulated storage resources for you. Once the storage emulator is ready, start your application by pressing F5. Navigate to your browser and enter the following URL with a dummy employee name and other request parameters.
+```
+http://localhost:8089/leavesagaapplication?name=rahul&startdate=2017-06-26&length=4
+```
+Since our service processes the requests asynchronusly, it immidiately responds to the user request with a message.
 
-
-
-
+After sometime, the **Leave Saga Service** Microservice will get triggered by NServiceBus and it will drive the workflow to completion. In case of failures, NServiceBus will trigger our service again with the message that failed to execute. This operation will be retried several times before the message is treated as a poison message and moved to another storage destination.
 
 ### Output
-
-http://localhost:8089/leavesagaapplication?name=rahul&startdate=2017-06-26&length=4
+You can verfiy the workflow execution steps by navigating to the diagnostics window and checking the application logs.
