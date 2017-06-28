@@ -1,7 +1,7 @@
 # Available Now: [Microservices with Azure]((https://www.packtpub.com/virtualization-and-cloud/microservices-azure)
 ---
 
-## The Sagas Pattern
+## The Event Sourcing Pattern
 Learn the internals of this pattern in Chapter 8 of [Microservices with Azure]((https://www.packtpub.com/virtualization-and-cloud/microservices-azure)
 
 ## Code
@@ -10,15 +10,28 @@ You can clone\download the code sample for this pattern from this link: https://
 ## Scenario
 Event Sourcing pattern allows you to store state of an object as it proceeds through a workflow. This operations is highly useful in scenarios where you want to recreate state or want to audit the state change. In this sample, we will create a concert of Microservices that make an e-Commerce system. Together these services will track the life of an article from the time it enters the inventory to the time it reaches the customer. The following are the participant Microservies in the system.
 
-1. Inventory Microservice: This service is responsible for ingesting an item into the warehouse and maintaining the warehouse inventory database.
-2. Customer Microservice: This service is responsible for purchase of an item and also for obtaining customer confirmation that the item reached the customer location.
-3. Shipping Microservice: This service manages shipment delivery and redelivery in case of failed delivery attempt.
-4. Audit Microservice: This service manages auditing the lifetime of any item.
+1. **Inventory Microservice**: This service is responsible for ingesting an item into the warehouse and maintaining the warehouse inventory database.
+2. **Customer Microservice**: This service is responsible for purchase of an item and also for obtaining customer confirmation that the item reached the customer location.
+3. **Shipping Microservice**: This service manages shipment delivery and redelivery in case of failed delivery attempt.
+4. **Audit Microservice**: This service manages auditing the lifetime of any item preset in the system.
+
+![Event Sourcing](/images/Event Sourcing.png)
+
+You may want to encapsulate the various participant Microservices from the client to make the services easy to consume. The **Commerce Service** encapsulates the Microservices in the system and interacts with the user. 
 
 ## Solution
-One of the Microservices in the Saga drives the workflow. In our solution that service is the **Leave Saga Service**. There are two other participant Microservices in the solution, namely the **Line Manager Leave Approval Service** and the **HR Leave Approval Service**, which provide approvals to a leave request. The following diagram illustrates the three Microservices working in concert.
 
-![Sagas Pattern](/images/Sagas Pattern.png)
+In the sample solution we have represented each of the Microservices present in the scenario as a controller in the **CommerceService** project to make it easy for you to debug and understand. In real-life scenarios, you should separate out the the various services into their own independent services which can be independently developed and deployed.
+
+![Event Sourcing Services](/images/EventSourcingServices.png)
+
+We will store the inventory data as a cache item in Redis (in real-life an ERP system such as SAP or SQL database is used for storing such data). Therefore, create a Redis cache instance either on cloud or on your system. The steps to provision a Redis cache on Azure is documented [here](https://docs.microsoft.com/en-us/azure/redis-cache/cache-dotnet-how-to-use-azure-redis-cache). You would also need a SQL database to store the events therefore, create a database either on cloud or on your system. The steps to create a database on Azure are documented [here](https://docs.microsoft.com/en-us/azure/sql-database/sql-database-get-started-portal).
+
+The Event Sourcing pattern requires you to append events to an append only storage. However, you don't need to create such a datastore yourself, there are several storage implementations that you can choose from. We will use [NEventStore](http://neventstore.org/) to store our events in SQL database for this sample.
+
+
+
+After the infrastructure has been provisioned, apply the connection strings of your resources 
 
 The **Leave Saga Service** drives the workflow and communicates first with **Line Manager Leave Approval Service** to get the leave approved. Once the service responds with an approval message, the service then communicates with the **HR Leave Approval Service** to obtain approval. Only when both the services provide an affirmative response to the leave request, the employee leave request stands approved.
 
