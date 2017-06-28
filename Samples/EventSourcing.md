@@ -8,9 +8,12 @@ Learn the internals of this pattern in Chapter 8 of [Microservices with Azure]((
 You can clone\download the code sample for this pattern from this link: https://github.com/PacktPublishing/Microservices-with-Azure/tree/master/Chapter%208
 
 ## Scenario
-Sagas are used to build workflows in Microservices. In this sample, we will create a simple leave management system workflow. Assume, that an organization has an automated leave management system. Every employee who requests a leave needs to get approval from the Line Manager and the Human Resource (HR) official. The leave approval systems of the Line Manager and the HR are fully automated Microservices which are capable of communicating over HTTP.
+Event Sourcing pattern allows you to store state of an object as it proceeds through a workflow. This operations is highly useful in scenarios where you want to recreate state or want to audit the state change. In this sample, we will create a concert of Microservices that make an e-Commerce system. Together these services will track the life of an article from the time it enters the inventory to the time it reaches the customer. The following are the participant Microservies in the system.
 
-The approval of leave requires the approval of first the Line Manager and then the HR personnel. These might be complex systems in an organization, but in our scenario, they are lenient and approve all the leave requests.
+1. Inventory Microservice: This service is responsible for ingesting an item into the warehouse and maintaining the warehouse inventory database.
+2. Customer Microservice: This service is responsible for purchase of an item and also for obtaining customer confirmation that the item reached the customer location.
+3. Shipping Microservice: This service manages shipment delivery and redelivery in case of failed delivery attempt.
+4. Audit Microservice: This service manages auditing the lifetime of any item.
 
 ## Solution
 One of the Microservices in the Saga drives the workflow. In our solution that service is the **Leave Saga Service**. There are two other participant Microservices in the solution, namely the **Line Manager Leave Approval Service** and the **HR Leave Approval Service**, which provide approvals to a leave request. The following diagram illustrates the three Microservices working in concert.
