@@ -29,64 +29,21 @@ We will store the inventory data as a cache item in Redis (in real-life an ERP s
 
 The Event Sourcing pattern requires you to append events to an append only storage. However, you don't need to create such a datastore yourself, there are several storage implementations that you can choose from. We will use [NEventStore](http://neventstore.org/) to store our events in SQL database for this sample.
 
+After the infrastructure has been provisioned, apply the connection strings of your resources in the following file:
 
+**CommerceService/PackageRoot/Config/Settings.xml**: The value of the parameter *ESConnectionString* must be set to the database connection string. The various Microservices (modeled as controllers) use this connection string to connect to Event Store database and populate events. The value of parameter *RedisConnectionString* requires to be set to the Redis cache connection string. The various Microservices will use the common store to store product data.
 
-After the infrastructure has been provisioned, apply the connection strings of your resources 
-
-The **Leave Saga Service** drives the workflow and communicates first with **Line Manager Leave Approval Service** to get the leave approved. Once the service responds with an approval message, the service then communicates with the **HR Leave Approval Service** to obtain approval. Only when both the services provide an affirmative response to the leave request, the employee leave request stands approved.
+If you launch the application on your system now, you can view the participant Microservice methods at the Swagger endpoint: http://localhost:8443/swagger/ui/index
 
 ## Implementation Overview
-The sample solution consists of three Microservices combined in a Service Fabric application for ease of deployment. The following diagram indicates the three Microservices in the solution each of which corresponds to the Microservices shown in the High-level architecture diagram above.
+Let's take a quick walkthrough of how the solution works.
 
-![Sagas Solution](/images/Sagas Solution.png)
+1. When a new product arrives in the inventory, a `POST` request is sent to the the `Inventory` controller.
 
-The implementation of the **HR Leave Approval Service** and the **Line Manager Leave Approval Service** is straightforward and self-explanatory. To implement saga in the **Leave Saga Service**, we have used NServiceBus sagas. The initialization code in `LeaveSagaService` sets up NServiceBus to work with Azure Storage.
+![Inventory Post Request](/images/InventoryPostRequest.png)
+The various parameters of this method are: *productId*, which is the unique identifier of a product, *productName*, which is the name of the product, *suplierName*, which is the name of supplier who sent the product to the warehouse and, *warehouseCode*, which is the code if the warehouse that is going to store the product.
 
-```
-var endpointConfiguration = new EndpointConfiguration("leavetransport");
-var persistence = endpointConfiguration.UsePersistence<AzureStoragePersistence>();
-persistence.ConnectionString("UseDevelopmentStorage=true");
-endpointConfiguration.SendFailedMessagesTo("error");
-var transport = endpointConfiguration.UseTransport<AzureStorageQueueTransport>();
-transport.ConnectionString("UseDevelopmentStorage=true");
-endpointInstance = await Endpoint.Start(endpointConfiguration).ConfigureAwait(false);
-```
-The `LeaveApprovalSaga` class processes individual leave request messages by orchestrating communication with the **HR Leave Approval Service** and the **Line Manager Leave Approval Service**.
-
-```
-var fabricClient = new FabricClient();
-var communicationFactory =
-    new HttpCommunicationClientFactory(new ServicePartitionResolver(() => fabricClient));
-var lineManagerServiceUri = new Uri(
-    FabricRuntime.GetActivationContext().ApplicationName + "/LineManagerLeaveApprovalService");
-var lineManagerClient = new ServicePartitionClient<HttpCommunicationClient>(
-    communicationFactory,
-    lineManagerServiceUri,
-    new ServicePartitionKey());
-
-var hrManagerServiceUri = new Uri(
-    FabricRuntime.GetActivationContext().ApplicationName + "/HRLeaveApprovalService");
-var hrClient = new ServicePartitionClient<HttpCommunicationClient>(
-    communicationFactory,
-    hrManagerServiceUri,
-    new ServicePartitionKey());
-
-await lineManagerClient.InvokeWithRetryAsync(
-    async client1 =>
-        {
-           ...
-        });
-```
-
-To debug the solution on your system, launch the Azure Storage emulator and wait for it to provision emulated storage resources for you. Once the storage emulator is ready, start your application by pressing F5. Navigate to your browser and enter the following URL with a dummy employee name and other request parameters.
-```
-http://localhost:8089/leavesagaapplication?name=rahul&startdate=2017-06-26&length=4
-```
-Since our service processes the requests asynchronously, it immediately responds to the user request with a message.
-
-![Sagas Output](/images/SagasOutput.png)
-
-After some time, the **Leave Saga Service** Microservice will get triggered by NServiceBus, and it will drive the workflow to completion. In the case of failures, NServiceBus will trigger our service again with the message that failed to execute. This operation will be retried several times before the message is treated as a poison message and moved to another storage destination.
+2. After the product is available in the inventory, a customer can purchase it. The `POST` method of the `Customer` controller accepts the *productId*, which is the identifier of the product and *customerName* which is the unique name of customer to 
 
 ### Output
 You can verify the workflow execution steps by navigating to the diagnostics window and checking the application logs.
