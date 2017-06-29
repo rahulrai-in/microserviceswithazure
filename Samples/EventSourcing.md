@@ -5,7 +5,7 @@
 Learn the internals of this pattern in Chapter 8 of [Microservices with Azure]((https://www.packtpub.com/virtualization-and-cloud/microservices-azure)
 
 ## Code
-You can clone\download the code sample for this pattern from this link: https://github.com/PacktPublishing/Microservices-with-Azure/tree/master/Chapter%208
+You can clone\download the code sample for this pattern from this link: https://github.com/PacktPublishing/Microservices-with-Azure/tree/master/Chapter08
 
 ## Scenario
 Event Sourcing pattern allows you to store the state of an object as it proceeds through a workflow. This operation is highly useful in situations where you want to recreate state or want to audit the state change. In this sample, we will create a concert of Microservices that make an e-Commerce system. Together these services will track the life of an article from the time it enters the inventory to the time it reaches the customer. The following are the participant Microservices in the system.

@@ -5,24 +5,14 @@
 Learn the internals of this pattern in Chapter 8 of [Microservices with Azure]((https://www.packtpub.com/virtualization-and-cloud/microservices-azure)
 
 ## Code
-You can clone\download the code sample for this pattern from this link: https://github.com/PacktPublishing/Microservices-with-Azure/tree/master/Chapter%208
+You can clone\download the code sample for this pattern from this link: https://github.com/PacktPublishing/Microservices-with-Azure/tree/master/Chapter08
 
 ## Scenario
 By nature, actors are single threaded and support turn based conucrrency. You can use this pattern to queue messages to actors that they can process asynchronusly without blocking the client. To demonstrate this pattern, we will build a Microservice that can count the number of pixels in an image and detect the number of pixels of a certain color. The client should not have to wait for the actor to finish processing and should be able to view the progress that the actor is making with the operation.
 
 ## Solution
+The sample application consisits of an actor that traverses the pixel matrix of an image and classifies the pixels. To simulate a long running process, a the worker thread has been deliberately made to wait.
 
-In the sample solution, we have represented each of the Microservices present in the scenario as a controller in the **CommerceService** project to make it easy for you to debug and understand. In real-life situations, you should separate out the various services into independent services which can be independently developed and deployed.
-
-![Event Sourcing Services](/images/EventSourcingServices.png)
-
-We will store the inventory data as a cache item in Redis (in real-life an ERP system such as SAP or SQL database is used for storing such data). Therefore, create a Redis cache instance either on Azure or your system. The steps to provision a Redis cache on Azure are documented [here](https://docs.microsoft.com/en-us/azure/redis-cache/cache-dotnet-how-to-use-azure-redis-cache). You would also need a SQL database to store the events, therefore, create a database either on Azure or your system. The steps to create a database on Azure are documented [here](https://docs.microsoft.com/en-us/azure/sql-database/sql-database-get-started-portal).
-
-The Event Sourcing pattern requires you to append events to an append-only storage. However, you don't need to create such a datastore yourself. There are several storage implementations that you can choose from. We will use [NEventStore](http://neventstore.org/) to store our events in SQL database for this sample.
-
-After the infrastructure has been provisioned, apply the connection strings of your resources in the following file:
-
-**CommerceService/PackageRoot/Config/Settings.xml**: Set the value of the parameter *ESConnectionString* to the database connection string. The various Microservices (modeled as controllers) use this connection string to connect to Event Store database and populate events. Set the value of parameter *RedisConnectionString* to the Redis cache connection string. The various Microservices will use this as a common store to store product data.
 
 If you launch the application on your system now, you can view the participant Microservice methods at the Swagger endpoint: http://localhost:8443/swagger/ui/index
 

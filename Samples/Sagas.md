@@ -5,7 +5,7 @@
 Learn the internals of this pattern in Chapter 8 of [Microservices with Azure]((https://www.packtpub.com/virtualization-and-cloud/microservices-azure)
 
 ## Code
-You can clone\download the code sample for this pattern from this link: https://github.com/PacktPublishing/Microservices-with-Azure/tree/master/Chapter%208
+You can clone\download the code sample for this pattern from this link: https://github.com/PacktPublishing/Microservices-with-Azure/tree/master/Chapter08
 
 ## Scenario
 Sagas are used to build workflows in Microservices. In this sample, we will create a simple leave management system workflow. Assume, that an organization has an automated leave management system. Every employee who requests a leave needs to get approval from the Line Manager and the Human Resource (HR) official. The leave approval systems of the Line Manager and the HR are fully automated Microservices which are capable of communicating over HTTP.
