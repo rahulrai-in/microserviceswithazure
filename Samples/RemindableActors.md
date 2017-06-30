@@ -1,127 +1,133 @@
 # Available Now: [Microservices with Azure]((https://www.packtpub.com/virtualization-and-cloud/microservices-azure)
 ---
 
-## The Event Sourcing Pattern
+## The Remindable Actors Pattern
 Learn the internals of this pattern in Chapter 8 of [Microservices with Azure]((https://www.packtpub.com/virtualization-and-cloud/microservices-azure)
 
 ## Code
 You can clone\download the code sample for this pattern from this link: https://github.com/PacktPublishing/Microservices-with-Azure/tree/master/Chapter08
 
 ## Scenario
-By nature, actors are single threaded and support turn based conucrrency. You can use this pattern to queue messages to actors that they can process asynchronusly without blocking the client. To demonstrate this pattern, we will build a Microservice that can count the number of pixels in an image and detect the number of pixels of a certain color. The client should not have to wait for the actor to finish processing and should be able to view the progress that the actor is making with the operation.
+By nature, actors are single threaded and support turn based concurrency. You can use this pattern to queue messages to actors that they can process asynchronously without blocking the client. To demonstrate this pattern, we will build a Microservice that can count the number of pixels in an image and detect the number of pixels of a particular color. The client should not have to wait for the actor to finish processing and should be able to view the progress that the actor is making with the operation.
 
 ## Solution
-The sample application consisits of an actor that traverses the pixel matrix of an image and classifies the pixels. To simulate a long running process, a the worker thread has been deliberately made to wait.
+The sample solution consists of a Reliable Actors application that contains an actor that traverses the pixel matrix of an image and classifies the pixels and another that aggregates the results and reports progress of the operation to the client. To simulate a long running process, the actor worker thread has been deliberately made to wait while going through the process of counting pixels.
 
+To free the caller immediately, the application does not process a client request straightaway. Instead, when an actor receives a request to execute a long running process, it registers a reminder for itself and immediately responds to the client. When the reminder triggers, the actor initiates processing the client's request. Thus using Actor Reminders, the actor can queue a request and process it asynchronously.
 
-If you launch the application on your system now, you can view the participant Microservice methods at the Swagger endpoint: http://localhost:8443/swagger/ui/index
+The client should have the ability to view the progress of the requested operation. This is made possible by storing the operation progress as an actor state object in another actor. On request, an actor method can query this state and respond with the progress made with the requested operation.
 
 ## Implementation Overview
-Let's take a quick walkthrough of how the solution works.
+Let's first take an overview of what is present in the solution.
 
-### Ingestion
-When a new product arrives in the inventory, a `POST` request is sent to the the `Inventory` controller.
+![Remindable Actors Solution](/images/Remindable Actors Solution.png)
 
-![Inventory Post Request](/images/InventoryPostRequest.png)
+The solution consists of four projects:
 
-The various parameters of this method are: *productId*, which is the unique identifier of a product, *productName*, which is the name of the product, *suplierName*, which is the name of supplier who sent the product to the warehouse and, *warehouseCode*, which is the code if the warehouse that is going to store the product.
+1. **ColorCounter**: This is a Service Fabric Reliable Actors application that contains the actor `ColorCounter`  to accept an image and count the number of pixels of a particular color in it. Another actor `ResultAggregator` maintains the progress and reports it to the client on request.
+2. **ColorCounter.Interfaces**: This project contains the contracts exposed by the actor to the clients. The clients use these contracts to interact with the actor.
+3. **Colorcounter.Web**: This is a Stateless Reliable Application WebAPI that serves as an interface to communicate with the client. We will directly interact with this API, which will, in turn, send requests to the actor using the contracts.
+4. **RemindableActors**: This is a Service Fabric application that references the service projects that we defined above.
 
-### Shopping
-After the product is available in the inventory, a customer can purchase it. After a successful purchase, the `POST` method of `Shipping` controller is invoked. The parameters of this method help recognize the product, warehouse, and customer name. All these parameters are necessary to ensure that correct product is shipped to the right customer.
+The **ColorCounter.Web** exposes multiple methods to work with actors. Here is the swagger definition of the methods exposed by the service.
 
-![Shipping Post Request](/images/ShippingPostRequest.png)
+![Remindable Actors Swagger](/images/RemindableActorsSwagger.png)
 
-### Shipping
-After the product has been shipped, the product might or might not reach the destination. If the product has been successfully delivered to the customer, the customer acknowledges the receipt by invoking the `POST` method of the `Customer` controller. This method accepts the *productId*, which is the identifier of the product and *customerName* which is the unique name of customer buying the product (assuming that other relevant details such as shipping address and payment are taken care of).
+Here's what the different methods do:
 
-![Customer Post Request](/images/CustomerPostRequest.png)
+1. **GET /api/ConcurrencyDemo**: This method provides an example of the single threaded nature of actors. This method invokes an actor instance method which does nothing but waits for a couple of seconds before responding. This proves that if you trigger long-running actor methods from your client, the client would need to keep waiting for the operation to complete.
+2. **POST /api/Image**: This method accepts an image and saves it in `ColorCounter` actor state. This image is later used to find the number of pixels of a particular color.
+3. **POST /api/Pixel**: This method requests the `ColorCounter` actor instance to count the number of pixels in the image supplied by the previous method.
+4. **GET /api/Pixel**: This method requests the `IResultAggregator` actor instance to report the progress it has made with the operation and displays it to the client.
 
-Alternatively, the shipment might not succeed, and the customer might request for another delivery attempt. This request is made through `POST` method of the `Customer` controller. The various parameters of this method help identify the shipment for which the customer is requesting another delivery attempt.
-
-![Customer Put Request](/images/CustomerPutRequest.png)
-
-### Audit
-An administrator or a customer support personnel might want to track the lifetime of a product in the system. The lifetime events of an item can be tracked by invoking the `GET` method of the `Audit` controller. This method requires a unique code of the entity being tracked as the *correlationCode* parameter value, which in our case is the identifier of the product.
-
-![Audit Get Request](/images/AuditGetRequest.png)
-
-The code of all the controller methods is similar except that of the `AuditController`. Let's see how events are generated by looking at one of the methods, the `POST` method of the `ShippingController`, which is as follows. 
+The actor methods are fairly straightforward, so let's directly navigate to the lifecycle of the long-running pixel counting process. The process starts from the POST request made to the `PixelController`.
 
 ```
-var product = new Product(this.CacheProxy) { Name = productName };
-var wareHouse = new Warehouse(this.CacheProxy) { Name = warehouseName };
-var customer = new Customer(this.CacheProxy) { Name = customerName };
-var result =
-    await this.EventProcessor.Process(
-        new ShipFromWareHouseEvent(DateTime.UtcNow, product, wareHouse, customer));
-return this.Request.CreateResponse(HttpStatusCode.OK, result);
+var colorCounterActor = ActorProxy.Create<IColorCounter>(new ActorId(actorId), ColorCounterServiceUri);
+var token = this.cts.Token;
+await colorCounterActor.CountPixels(colorName, token);
+return this.Request.CreateResponse(HttpStatusCode.OK, "submitted");
 ```
-This method gets the relevant details from the datastore (in our case the Redis cache) and invokes the `ShipFromWareHouseEvent` event. The `Process` method of `EventProcessor` ingests an event and simply stores it in the append only event store (SQL database). Note that we are not storing the current state of the entity anywhere because we can simply retrieve the last event from the Event Store and recreate our entity.
+In the method, the service uses the `ActorProxy` to get a reference to the actor instance that would process the request. Note that in Reliable Actors framework, actors do not share state. Therefore, you would need to take care that you send all the requests to the same actor, which is uniquely recognized by Service Fabric by `ActorId`. Next, the service requests the actor instance to initiate the process of counting pixels of the desired color in the image.
+
+Let's now move to the `ColorCounter` class to see how the `CountPixels` request is processed by the actor. You will find that upon receiving the request, the actor simply registers a reminder and returns immediately.
 
 ```
-JObject result;
-using (var scope = new TransactionScope())
+public async Task CountPixels(string color, CancellationToken token)
 {
-    using (var store = Initializtion.InitEventStore(this.connectionString))
+    var actorReminder = await this.RegisterReminderAsync(
+        "countRequest",
+        Encoding.ASCII.GetBytes(color),
+        TimeSpan.FromSeconds(2),
+        TimeSpan.FromDays(1));
+}
+```
+At this point, the client would receive a response from the service to show that its request has been accepted. Next, when the actor reminder triggers, the actor begins the process of counting pixels. After it is done processing, it unregisters the reminder to avoid another processing cycle.
+
+```
+public async Task ReceiveReminderAsync(string reminderName, byte[] context, TimeSpan dueTime, TimeSpan period)
+{
+    if (reminderName.Equals("countRequest"))
     {
-        result = await @event.Process(); // Allows the entity to carry out processing requirements such as removing article from inventory
-        var streamId = @event.Id;
-        using (var stream = store.OpenStream(streamId, 0))
+        try
         {
-            stream.Add(new EventMessage { Body = JsonConvert.SerializeObject(@event) });
-            stream.CommitChanges(Guid.NewGuid());
+            var imageUri = await this.StateManager.TryGetStateAsync<string>("sourceImage");
+            var colorToInspect = Encoding.ASCII.GetString(context).ToLowerInvariant();
+            if (imageUri.HasValue)
+            {
+                // Long running process which requets IResultAggregator to keep refreshing state with updated result.
+                
+            }
+
+            var reminder = this.GetReminder("countRequest");
+            await this.UnregisterReminderAsync(reminder);
         }
-    }
-
-    scope.Complete();
-```
-
-Finally, let's go through the `AuditController` which parses the Event Store to fetch entity states. The `GET` request to this controller, invokes the `ReadStream` method. This method queries the Event Store for all the events associated with a particular identifier and responds with a snapshot of the entity states.
-
-```
-var response = new List<string>();
-var resolvedEvents = new List<EventMessage>();
-using (var store = Initializtion.InitEventStore(this.connectionString))
-{
-    using (var stream = store.OpenStream(streamId, 0))
-    {
-        resolvedEvents = stream.CommittedEvents.ToList();
-        foreach (var @event in resolvedEvents)
+        catch (Exception e)
         {
-            response.Add(JObject.Parse(@event.Body.ToString()).Property("Message").Value.ToString());
+            Console.WriteLine(e);
+            throw;
         }
     }
 }
-
-return response;
 ```
-The **Client** project is simply a UI wrapper over the *CommerceService* so that we can get some visual feedback on the operations that the user is carrying out.
+Since, the progress of the operation is captured in the state of `IResultAggregator` actor. Upon request, this state data is fetched and returned to the client.
+
+```
+public async Task<Dictionary<string, string>> Result(CancellationToken token)
+{
+    var aggregateResult = new Dictionary<string, string> { { "color", "0 px. out of 0 px." } };
+    var result = await this.StateManager.TryGetStateAsync<Dictionary<string, long>>("colorCounter", token);
+    var totalPixels = await this.StateManager.TryGetStateAsync<long>("totalPixels", token);
+    if (result.HasValue)
+    {
+        if (totalPixels.HasValue)
+        {
+            aggregateResult["color"] = $"{result.Value.Sum(x => x.Value)}px. out of {totalPixels.Value}px.";
+        }
+    }
+
+    return aggregateResult;
+}
+```
+
+Let's execute our application to study its behavior.
 
 ### Output
-It's time to test our application. Simply launch the **EventSourcing** Service Fabric application and wait for it to get ready. Next, launch the **Client** application. Note that if the endpoint of your **ControllerService** is different from that configured in the client, you can change it in the `appsettings` file of the client.
+Let's head over to the Swagger UI to trigger the various operations of the service. Let's first start with sending GET request to the `ConcurrencyDemo` controller. Pick an actor identifier that you will use throughout the demo. I will use the actor identifier *demoactor* for this demo.
 
-Let's first bring a new item in the inventory. Fill out the details in the client and click the **Add To Inventory** button.
+![Concurrency Demo](/images/Concurrency Demo.png)
 
-![Add Product](/images/AddProduct.png)
+You will notice that the actor does not return before completing the simulated long running process and you can't send any other request to the actor while it is processing the request.
+Next, let's send an image to our actor to work with by invoking the POST request of the `ImageController`.
 
-You can track the status of the product at any point of time in the status box. This box also represents how the record would look in a traditional database that does not use Event Sourcing.
+![Post Api Image](/images/Post Api Image.png)
 
-![Database Status](/images/DatabaseStatus.png)
+Next, send a POST request to `PixelController` to start the log running process. The program can process only primary colors, so make sure that you enter the name of one of the primary colors as input.
 
-Next, let's simulate a customer purchase. In the **Product Purchased** section, enter your name and click on the **Ship to Customer** button.
+![Post Pixel Controller](/images/Post Pixel Controller.png)
 
-![Product Purchased](/images/Product Purchased.png)
+The above command will trigger a long-running process. To evaluate the progress of the operation, send a GET request to the `PixelController`.
 
-Assume that shipment failed and the customer has requested for reshipping the item. To request reshipping click on the **Reship** button.
+![Get Pixel Controller](/images/Get Pixel Controller.png)
 
-![Reship](/images/Reship.png)
-
-Finally, assume that customer has received the shipment. Let's confirm the receipt by clicking on the **Delivered** button.
-
-![Delivery Received](/images/Delivery Received.png)
-
-An auditor can track the lifetime of the item by clicking on the **Audit Lifecycle** button.
-
-![Audit Log](/images/Audit Log.png)
-
-If you want to extend the system and recreate the product state at any point in time, you can easily do so from the Event Store using the NEventStore APIs.
+You can keep sending the request to the controller to get the most up to date response to your processing request.
