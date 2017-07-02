@@ -1,195 +1,133 @@
 # Available Now: [Microservices with Azure]((https://www.packtpub.com/virtualization-and-cloud/microservices-azure)
 ---
 
-## The Circuit Breaker Pattern
+## The Remindable Actors Pattern
 Learn the internals of this pattern in Chapter 8 of [Microservices with Azure]((https://www.packtpub.com/virtualization-and-cloud/microservices-azure)
 
 ## Code
 You can clone\download the code sample for this pattern from this link: https://github.com/PacktPublishing/Microservices-with-Azure/tree/master/Chapter08
 
 ## Scenario
-A Microservice application is composed of several individual Microservices. In a composite UI application where individual Microservice drives each component, it is desirable that failure of a single Microservice should not cause failure of the application.
+By nature, actors are single threaded and support turn based concurrency. You can use this pattern to queue messages to actors that they can process asynchronously without blocking the client. To demonstrate this pattern, we will build a Microservice that can count the number of pixels in an image and detect the number of pixels of a particular color. The client should not have to wait for the actor to finish processing and should be able to view the progress that the actor is making with the operation.
 
 ## Solution
-A circuit breaker is a component that wraps a service call and monitors it for failures. Once the failures reach a certain threshold, the circuit breaker trips and all further calls to the circuit breaker return with an error or follow an alternative workflow, without the protected call being made at all.
+The sample solution consists of a Reliable Actors application that contains an actor that traverses the pixel matrix of an image and classifies the pixels and another that aggregates the results and reports progress of the operation to the client. To simulate a long running process, the actor worker thread has been deliberately made to wait while going through the process of counting pixels.
 
-The sample application consists of a .Net core composite UI application which displays the feed from a Weather Reporting Microservice. Since the application is stateless, therefore, we will use a distributed Circuit breaker that stores state in a distributed store which in our case is a Reliable Dictionary.
+To free the caller immediately, the application does not process a client request straightaway. Instead, when an actor receives a request to execute a long running process, it registers a reminder for itself and immediately responds to the client. When the reminder triggers, the actor initiates processing the client's request. Thus using Actor Reminders, the actor can queue a request and process it asynchronously.
 
-Following is the architecture of the application present in the sample.
-
-![Circuit Breaker](/images/Circuit Breaker.png)
-
-The Service Fabric application consists of a .Net core based Stateless Reliable Service web interface that interacts with a weather service that is a Stateful Reliable Service. The weather service, in turn, uses the circuit breaker to interact with a simulated weather microservice that returns random weather forecasts for a region.
+The client should have the ability to view the progress of the requested operation. This is made possible by storing the operation progress as an actor state object in another actor. On request, an actor method can query this state and respond with the progress made with the requested operation.
 
 ## Implementation Overview
-Let's first take an overview of the projects present in the solution.
+Let's first take an overview of what is present in the solution.
 
-![Circuit Breaker Projects](/images/Circuit Breaker Projects.png)
+![Remindable Actors Solution](/images/Remindable Actors Solution.png)
 
-The solution consists of five projects:
+The solution consists of four projects:
 
-1. **CompositeWeb**: This is a .Net Core Service Fabric Stateless Reliable Service application that contains a weather widget that periodically refreshes to display the latest weather data. The UI also renders the status of circuit breaker object.
-2. **Contracts**: This project contains the contracts used by the CompositeWeb and WeatherService. These contracts are used to enable communication between the services.
-3. **WeatherService**: This is a Stateful Reliable Service application that serves as a proxy to the weather Microservice. The CompositeWeb application directly interacts with this service to populate the weather widget.
-4. **CircuitBreaker**: This is a Service Fabric application that references the reliable service projects that we defined above.
-5. **WeatherApp**: This is an independent Microservice that returns simulated weather data for a location. This service is not part of the CircuitBreaker Service Fabric application.
+1. **ColorCounter**: This is a Service Fabric Reliable Actors application that contains the actor `ColorCounter`  to accept an image and count the number of pixels of a particular color in it. Another actor `ResultAggregator` maintains the progress and reports it to the client on request.
+2. **ColorCounter.Interfaces**: This project contains the contracts exposed by the actor to the clients. The clients use these contracts to interact with the actor.
+3. **Colorcounter.Web**: This is a Stateless Reliable Application WebAPI that serves as an interface to communicate with the client. We will directly interact with this API, which will, in turn, send requests to the actor using the contracts.
+4. **RemindableActors**: This is a Service Fabric application that references the service projects that we defined above.
 
-To build a .Net core front-end for your reliable service is a relatively straightforward exercise, and MSDN does an excellent job at explaining the various steps involved in the process which is available at [this link](https://docs.microsoft.com/en-us/azure/service-fabric/service-fabric-add-a-web-frontend). 
+The **ColorCounter.Web** exposes multiple methods to work with actors. Here is the swagger definition of the methods exposed by the service.
 
-The request to get weather details start with the `InvokeAsync` method of `WeatherViewComponent` class. This method populates the session with the history of requests made to the weather service and records the time required to process each request.
+![Remindable Actors Swagger](/images/RemindableActorsSwagger.png)
 
-```
-var watch = Stopwatch.StartNew();
-var result = await this.weatherServiceClient.GetReport("2010");
-watch.Stop();
-result.ResponseTimeInSeconds = watch.Elapsed.TotalSeconds;
-```
-Next, let's move to the `WeatherService` class in the **WeatherService** project. The piece of code of our interest here is the following.
+Here's what the different methods do:
 
-```
-await this.circuitBreaker.Invoke(
-        async () =>
-        {
-            var client = new RestClient(ConfigurationManager.AppSettings["weatherapi"]);
-            var request = new RestRequest("?postCode={postCode}", Method.GET);
-            request.AddUrlSegment("postCode", postCode);
-            request.Timeout = TimeSpan.FromSeconds(10).Milliseconds;
-            var response = client.Execute<WeatherReport>(request);
-            if (response?.Data != null)
-            {
-                result = response.Data;
-                result.CircuitState = "Open";
-            }
-            else
-            {
-                throw new ApplicationException();
-            }
+1. **GET /api/ConcurrencyDemo**: This method provides an example of the single threaded nature of actors. This method invokes an actor instance method which does nothing but waits for a couple of seconds before responding. This proves that if you trigger long-running actor methods from your client, the client would need to keep waiting for the operation to complete.
+2. **POST /api/Image**: This method accepts an image and saves it in `ColorCounter` actor state. This image is later used to find the number of pixels of a particular color.
+3. **POST /api/Pixel**: This method requests the `ColorCounter` actor instance to count the number of pixels in the image supplied by the previous method.
+4. **GET /api/Pixel**: This method requests the `IResultAggregator` actor instance to report the progress it has made with the operation and displays it to the client.
 
-            using (var tx = this.StateManager.CreateTransaction())
-            {
-                await counterState.AddOrUpdateAsync(
-                    tx,
-                    "savedWeather",
-                    key => JsonConvert.SerializeObject(result),
-                    (key, val) => JsonConvert.SerializeObject(result));
-                await tx.CommitAsync();
-            }
-        },
-        async () =>
-        {
-            using (var tx = this.StateManager.CreateTransaction())
-            {
-                // service faulted. read old value and populate.
-                var value = await counterState.TryGetValueAsync(tx, "savedWeather");
-                if (value.HasValue)
-                {
-                    result = JsonConvert.DeserializeObject<WeatherReport>(value.Value);
-                }
-                else
-                {
-                    result = new WeatherReport { ReportTime = DateTime.UtcNow, Temperature = 0, WeatherConditions = "Unknown" };
-                    await counterState.AddOrUpdateAsync(
-                        tx,
-                        "savedWeather",
-                        key => JsonConvert.SerializeObject(result),
-                        (key, val) => JsonConvert.SerializeObject(result));
-                    await tx.CommitAsync();
-                }
-
-                result.CircuitState = "Closed";
-            }
-        });
-```
-The **WeatherService** wraps the call made to the weather microservice in a circuit breaker object. The circuit breaker `Invoke` method takes two inputs as arguments.
-
-1. The function that circuit breaker should try to invoke.
-2. The function that circuit breaker should invoke in case of failure.
-
-The code block above tries to make a call to the external service and in the event of failure, invokes a fallback workflow which returns the last recorded weather data to the service. Thus either the latest data or the cached data is returned to the web application on each call. Naturally, the next question that you might want to ask is how does the Circuit Breaker take care of failures?
-
-To answer this question, let's navigate to the `CircuitBreaker` class. The constructor of this class takes as input the reference to ReliableStateManager that governs Reliable Collections and the duration after which Circuit Breaker should reset its state after failure so that another call to the external service can be attempted.
+The actor methods are fairly straightforward, so let's directly navigate to the lifecycle of the long-running pixel counting process. The process starts from the POST request made to the `PixelController`.
 
 ```
-public CircuitBreaker(IReliableStateManager stateManager, int resetTimeoutInMilliseconds)
+var colorCounterActor = ActorProxy.Create<IColorCounter>(new ActorId(actorId), ColorCounterServiceUri);
+var token = this.cts.Token;
+await colorCounterActor.CountPixels(colorName, token);
+return this.Request.CreateResponse(HttpStatusCode.OK, "submitted");
+```
+In the method, the service uses the `ActorProxy` to get a reference to the actor instance that would process the request. Note that in Reliable Actors framework, actors do not share state. Therefore, you would need to take care that you send all the requests to the same actor, which is uniquely recognized by Service Fabric by `ActorId`. Next, the service requests the actor instance to initiate the process of counting pixels of the desired color in the image.
+
+Let's now move to the `ColorCounter` class to see how the `CountPixels` request is processed by the actor. You will find that upon receiving the request, the actor simply registers a reminder and returns immediately.
+
+```
+public async Task CountPixels(string color, CancellationToken token)
 {
-    this.stateManager = stateManager;
-    this.resetTimeoutInMilliseconds = resetTimeoutInMilliseconds;
+    var actorReminder = await this.RegisterReminderAsync(
+        "countRequest",
+        Encoding.ASCII.GetBytes(color),
+        TimeSpan.FromSeconds(2),
+        TimeSpan.FromDays(1));
 }
 ```
-Upon invocation, the `Invoke` method retrieves the error history and checks the time at which the last failure occurred. If the time now is within the time threshold, then we simply trigger the fallback function that is passed as the second argument to the function. If there was no error or if the wait threshold time has elapsed, we attempt invoking the external service. In the case of success or failure, we record the appropriate timestamp in the state dictionary.
+At this point, the client would receive a response from the service to show that its request has been accepted. Next, when the actor reminder triggers, the actor begins the process of counting pixels. After it is done processing, it unregisters the reminder to avoid another processing cycle.
 
 ```
-public async Task Invoke(Func<Task> func, Func<Task> failAction)
+public async Task ReceiveReminderAsync(string reminderName, byte[] context, TimeSpan dueTime, TimeSpan period)
 {
-    var errorHistory = await this.stateManager.GetOrAddAsync<IReliableDictionary<string, DateTime>>("errorHistory");
-    var cts = new CancellationTokenSource();
-    var token = cts.Token;
-    token.ThrowIfCancellationRequested();
-
-    using (var tx = this.stateManager.CreateTransaction())
+    if (reminderName.Equals("countRequest"))
     {
-        var errorTime = await errorHistory.TryGetValueAsync(tx, "errorTime");
-        if (errorTime.HasValue)
-        {
-            if ((DateTime.UtcNow - errorTime.Value).TotalMilliseconds < this.resetTimeoutInMilliseconds)
-            {
-                await failAction();
-                return;
-            }
-        }
         try
         {
-            await func();
-            await errorHistory.AddOrUpdateAsync(
-                tx,
-                "errorTime",
-                key => DateTime.MinValue,
-                (key, value) => DateTime.MinValue);
+            var imageUri = await this.StateManager.TryGetStateAsync<string>("sourceImage");
+            var colorToInspect = Encoding.ASCII.GetString(context).ToLowerInvariant();
+            if (imageUri.HasValue)
+            {
+                // Long running process which requets IResultAggregator to keep refreshing state with updated result.
+                
+            }
+
+            var reminder = this.GetReminder("countRequest");
+            await this.UnregisterReminderAsync(reminder);
         }
-        catch (Exception)
+        catch (Exception e)
         {
-            await failAction();
-            await errorHistory.AddOrUpdateAsync(
-                tx,
-                "errorTime",
-                key => DateTime.UtcNow,
-                (key, value) => DateTime.UtcNow);
-        }
-        finally
-        {
-            await tx.CommitAsync();
+            Console.WriteLine(e);
+            throw;
         }
     }
 }
 ```
-Now that we understand how the process works, let's prepare the solution to test its behavior. Since the application requires persisting session state, add connection string of your Redis cache in the `Startup` class of the **CompositeWeb** project in the `ConfigureServices` function.
+Since, the progress of the operation is captured in the state of `IResultAggregator` actor. Upon request, this state data is fetched and returned to the client.
 
 ```
-public void ConfigureServices(IServiceCollection services)
+public async Task<Dictionary<string, string>> Result(CancellationToken token)
+{
+    var aggregateResult = new Dictionary<string, string> { { "color", "0 px. out of 0 px." } };
+    var result = await this.StateManager.TryGetStateAsync<Dictionary<string, long>>("colorCounter", token);
+    var totalPixels = await this.StateManager.TryGetStateAsync<long>("totalPixels", token);
+    if (result.HasValue)
+    {
+        if (totalPixels.HasValue)
         {
-            services.AddSingleton<IDistributedCache>(
-            serviceProvider =>
-                new RedisCache(new RedisCacheOptions
-                {
-                    Configuration = "YOUR REDIS CACHE CONNECTION STRING"
-                }));
-
-            services.AddSession();
-            // Add framework services.
-            services.AddMvc();
+            aggregateResult["color"] = $"{result.Value.Sum(x => x.Value)}px. out of {totalPixels.Value}px.";
         }
+    }
+
+    return aggregateResult;
+}
 ```
 
-To debug, first launch the **WeatherApp** application, which is the simulated weather service and then start the **CircuitBreaker** Service Fabric application.
+Let's execute our application to study its behavior.
 
 ### Output
-In your browser, navigate to the CompositeWeb application deployed at this link: http://localhost:8444
-On the landing page, you will observe that the weather widget keeps updating on every refresh. Notice that on every call the circuit breaker state is also refreshed, which would be in open state currently.
+Let's head over to the Swagger UI to trigger the various operations of the service. Let's first start with sending GET request to the `ConcurrencyDemo` controller. Pick an actor identifier that you will use throughout the demo. I will use the actor identifier *demoactor* for this demo.
 
-![Circuit Breaker Success](/images/Circuit Breaker Success.png)
+![Concurrency Demo](/images/Concurrency Demo.png)
 
-Next, kill the **WeatherApp** by shutting down the browser instance of the weather Microservice. You will now see that the circuit state has switched to **Closed** after some time (the first failure takes some time to record because it waits for an error to return or call to timeout before tripping the circuit breaker) and any subsequent function calls return immediately. This proves that no network and computing resources are wasted on making an attempt to invoke a failed service.
+You will notice that the actor does not return before completing the simulated long running process and you can't send any other request to the actor while it is processing the request.
+Next, let's send an image to our actor to work with by invoking the POST request of the `ImageController`.
 
-![Circuit Breaker Scenarios](/images/Circuit Breaker Scenarios.png)
+![Post Api Image](/images/Post Api Image.png)
 
-Now try relaunching the weather Microservice. The application would wait for threshold time to elapse before making another request to the service and resetting the circuit breaker in case of success.
+Next, send a POST request to `PixelController` to start the log running process. The program can process only primary colors, so make sure that you enter the name of one of the primary colors as input.
+
+![Post Pixel Controller](/images/Post Pixel Controller.png)
+
+The above command will trigger a long-running process. To evaluate the progress of the operation, send a GET request to the `PixelController`.
+
+![Get Pixel Controller](/images/Get Pixel Controller.png)
+
+You can keep sending the request to the controller to get the most up to date response to your processing request.
