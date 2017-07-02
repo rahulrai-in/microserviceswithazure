@@ -1,6 +1,9 @@
 # Summary
 
 * [Introduction](README.md)
+* [Authors](Authors.md)
+	* [Rahul Rai](Rahul.md)
+	* [Namit Tanaserri](Namit.md)
 * [Further Reading](KeyReading.md)
 * [Samples](Samples.md)
 	* [Sagas](Samples/Sagas.md)
