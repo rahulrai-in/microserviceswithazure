@@ -2,7 +2,9 @@
 ---
 
 ## Namit Tanasseri
-<i class="fa fa-pencil" aria-hidden="true" style="font-size:25px"></i> [http://namit.me/](http://namit.me/)
+<i class="fa fa-pencil" aria-hidden="true" style="font-size:20px"></i> **[http://namit.me/](http://namit.me/)**
+
+
 <img src="/images/Namit.png" align="left" style="padding-right:10px;padding-bottom:100%;"/>
 **Namit Tanasseri** is a certified Microsoft Cloud Solutions Architect with more than 11 years
 of work experience. He started his career as a Software Development Engineer with
