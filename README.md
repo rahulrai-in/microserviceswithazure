@@ -1,9 +1,6 @@
 # Available Now: [Microservices with Azure]((https://www.packtpub.com/virtualization-and-cloud/microservices-azure)
 ---
 
-> **Getting Ready**: *This website will be operational on June 3, 2017. You might see it getting updated several times a day until then. That's me and my friend `GIT PUSH` pushing changes to get this site ready for you.*
-
-
 ## Microservices with Azure
 Written by [Rahul Rai](https://rahulrai.in) and [Namit TS](http://namit.me) published by - Packt
 
