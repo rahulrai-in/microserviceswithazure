@@ -2,8 +2,10 @@
 ---
 
 ## Rahul Rai
-### <i class="fa fa-pencil" aria-hidden="true" style="font-size:25px"></i> [https://rahulrai.in](https://rahulrai.in)
-<img src="/images/Rahul.png" align="right"/>
+<i class="fa fa-pencil" aria-hidden="true" style="font-size:20px"></i> **[https://rahulrai.in](https://rahulrai.in)**
+
+
+<img src="/images/Rahul.png" align="right" style="padding-bottom:100%;"/>
 **Rahul Rai** is a technology consultant based in Sydney, Australia with over nine years of
 professional experience. He has been at the forefront of cloud consulting for government
 organizations and businesses around the world.
