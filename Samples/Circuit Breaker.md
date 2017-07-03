@@ -1,8 +1,8 @@
-# Available Now: [Microservices with Azure]((https://www.packtpub.com/virtualization-and-cloud/microservices-azure)
+# Available Now: [Microservices with Azure](https://www.packtpub.com/virtualization-and-cloud/microservices-azure)
 ---
 
 ## The Circuit Breaker Pattern
-Learn the internals of this pattern in Chapter 8 of [Microservices with Azure]((https://www.packtpub.com/virtualization-and-cloud/microservices-azure)
+Learn the internals of this pattern in Chapter 8 of [Microservices with Azure](https://www.packtpub.com/virtualization-and-cloud/microservices-azure)
 
 ## Code
 You can clone\download the code sample for this pattern from this link: https://github.com/PacktPublishing/Microservices-with-Azure/tree/master/Chapter08

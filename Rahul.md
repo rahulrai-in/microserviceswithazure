@@ -1,4 +1,4 @@
-# Available Now: [Microservices with Azure]((https://www.packtpub.com/virtualization-and-cloud/microservices-azure)
+# Available Now: [Microservices with Azure](https://www.packtpub.com/virtualization-and-cloud/microservices-azure)
 ---
 
 ## Rahul Rai

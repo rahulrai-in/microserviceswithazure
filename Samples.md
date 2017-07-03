@@ -1,8 +1,8 @@
-# Available Now: [Microservices with Azure]((https://www.packtpub.com/virtualization-and-cloud/microservices-azure)
+# Available Now: [Microservices with Azure](https://www.packtpub.com/virtualization-and-cloud/microservices-azure)
 ---
 
 ## About
-We have discussed several Microservice architecture patterns in our book [Microservices with Azure]((https://www.packtpub.com/virtualization-and-cloud/microservices-azure). In this section, we will discuss how we can realize some of the key architecture patterns that we covered in the book.
+We have discussed several Microservice architecture patterns in our book [Microservices with Azure](https://www.packtpub.com/virtualization-and-cloud/microservices-azure). In this section, we will discuss how we can realize some of the key architecture patterns that we covered in the book.
 
 ## Code Repo
 All the samples are available for download at the Packt's GitHub repository available here: [https://github.com/PacktPublishing/Microservices-with-Azure](https://github.com/PacktPublishing/Microservices-with-Azure)
