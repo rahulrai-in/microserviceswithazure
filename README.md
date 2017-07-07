@@ -4,6 +4,8 @@
 ## Microservices with Azure
 Written by [Rahul Rai](https://rahulrai.in) and [Namit TS](http://namit.me) published by - Packt
 
+<img src="https://cdn.rahulrai.in/media/bookfront.jpg" align="center" style="padding 10px;"/>
+
 Microservices with Azure will help you understand the concepts of Microservice Architecture and methods to build highly scalable enterprise-grade applications using Microsoft Azure Service Fabric. We will begin with learning the intricacies of the Microservice Architecture and its advantages over the monolithic architecture and the Service Oriented Architecture (SOA). 
 
 Next, we will look into Microsoft Azure Service Fabric, which is the best-in-class platform for hosting Microservices. We will explore how to develop and deploy applications on Microsoft Azure Service Fabric to gain a thorough understanding of it.
